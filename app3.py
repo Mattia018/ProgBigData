@@ -217,12 +217,20 @@ if label_button or pre_button:
     st.session_state.visualizations['label_chart'] = label_data
 
 if 'label_chart' in st.session_state.visualizations:
-    st.bar_chart(
-        st.session_state.visualizations['label_chart'],
-        x="AIDRLabel",
-        y="count",
-        height=600
-    )
+    # st.bar_chart(
+    #     st.session_state.visualizations['label_chart'],
+    #     x="AIDRLabel",
+    #     y="count",
+    #     height=600
+    # )
+
+    fig = px.bar(
+            st.session_state.visualizations['label_chart'],
+            x="AIDRLabel",
+            y="count",   
+        )
+    
+    st.plotly_chart(fig, use_container_width=True)
 
 st.divider()
 ###   parole più frequenti per tipologia tweet  ###
@@ -322,7 +330,7 @@ if 'label_not_related_or_irrelevant_chart' in st.session_state.visualizations:
             title="Top 20 parole più frequenti nei Tweets : Personal",
 
         )
-        fig.update_traces(marker_color='darkblue')
+        fig.update_traces(marker_color='cornflowerblue')
         st.plotly_chart(fig, use_container_width=True)
 
     with tab6:
@@ -335,7 +343,7 @@ if 'label_not_related_or_irrelevant_chart' in st.session_state.visualizations:
             title="Top 20 parole più frequenti nei Tweets : Caution and advice",
 
         )
-        fig.update_traces(marker_color='darkblue')
+        fig.update_traces(marker_color='cornflowerblue')
         st.plotly_chart(fig, use_container_width=True)
 
     with tab7:
@@ -348,7 +356,7 @@ if 'label_not_related_or_irrelevant_chart' in st.session_state.visualizations:
             title="Top 20 parole più frequenti nei Tweets : Infrastructure and utilities damage",
 
         )
-        fig.update_traces(marker_color='darkblue')
+        fig.update_traces(marker_color='cornflowerblue')
         st.plotly_chart(fig, use_container_width=True)
 
     with tab8:
@@ -361,7 +369,7 @@ if 'label_not_related_or_irrelevant_chart' in st.session_state.visualizations:
             title="Top 20 parole più frequenti nei Tweets : Injured or dead people",
 
         )
-        fig.update_traces(marker_color='darkblue')
+        fig.update_traces(marker_color='cornflowerblue')
         st.plotly_chart(fig, use_container_width=True)
 
     tab9, tab10, tab11, tab12 = st.tabs(["Affected individual", "Missing and found people",
@@ -537,11 +545,11 @@ if 'combined_chart' in st.session_state.visualizations:
 
     # Definisci lo stato di visualizzazione iniziale
     INITIAL_VIEW_STATE = pdk.ViewState(
-        latitude=47.65,
-        longitude=7,
+        latitude=48.17,
+        longitude=-24.27,
         zoom=4.5,
         max_zoom=16,
-        pitch=50,
+        pitch=30,
         bearing=0
     )
 
@@ -594,9 +602,9 @@ if 'sent_chart' in st.session_state.visualizations:
     st.divider()
 
     sentiment_colors = {
-        "positive": "green",
-        "neutral": "gray",
-        "negative": "red"
+        "positive": "lightgreen",
+        "neutral": "lightgray",
+        "negative": "chocolate"
     }
 
     fig = px.bar(
@@ -604,10 +612,13 @@ if 'sent_chart' in st.session_state.visualizations:
         x="sentiment",
         y="count",
         color="sentiment",
-        color_discrete_map=sentiment_colors
+        color_discrete_map=sentiment_colors,        
     )
-    fig.update_layout(showlegend=False)
-    st.plotly_chart(fig, use_container_width=True)
+
+    left, middle, right = st.columns((1, 5, 1))
+    with middle:
+        fig.update_layout(showlegend=False)
+        st.plotly_chart(fig)
 
 st.divider()
 
@@ -642,9 +653,9 @@ if 'sent_pos_chart' in st.session_state.visualizations:
     st.divider()
 
     sentiment_colors = {
-        "positive": "green",
-        "neutral": "gray",
-        "negative": "red"
+        "positive": "lightgreen",
+        "neutral": "lightgray",
+        "negative": "chocolate"
     }
 
     fig = px.bar(
@@ -652,10 +663,13 @@ if 'sent_pos_chart' in st.session_state.visualizations:
         x="sentiment",
         y="count",
         color="sentiment",
-        color_discrete_map=sentiment_colors
+        color_discrete_map=sentiment_colors,        
     )
-    fig.update_layout(showlegend=False)
-    st.plotly_chart(fig, use_container_width=True)
+
+    left, middle, right = st.columns((1, 5, 1))
+    with middle:
+        fig.update_layout(showlegend=False)
+        st.plotly_chart(fig, use_container_width = True)
 
 st.divider()
 
@@ -743,10 +757,14 @@ if 'val_accuracy_chart' in st.session_state.visualizations:
 
     st.divider()
 
+    metriche = ['Precision', 'Recall', 'F1-Score']
+
+    fig = go.Figure()
+
     for label in st.session_state.visualizations['metrics_df_label_chart']['Label']:
         data_frame_label = st.session_state.visualizations['metrics_df_label_chart'][metriche].loc[
             st.session_state.visualizations['metrics_df_label_chart']['Label'] == label]
-        text = np.trunc(data_frame.values * 1000) / 1000
+        text = np.trunc(data_frame_label.values * 1000) / 1000
         fig.add_trace(go.Bar(x=metriche, y=data_frame_label.values[0], text=text, name=label))
 
     fig.update_layout(barmode='group', title="Metriche per ciascuna etichetta", xaxis_title="Metrica",
@@ -758,11 +776,13 @@ if 'val_accuracy_chart' in st.session_state.visualizations:
     fig_overall = px.bar(st.session_state.visualizations['overall_metrics_df_chart'], x="Metrica", y="Valore",
                          title="Metriche Generali",
                          labels={"Metrica": "Metrica", "Valore": "Valore"},
-                         height=400)
+                         height=400,                                                  
+                         )
 
-    st.plotly_chart(fig_overall, use_container_width=True)
-
-    st.divider()
+    left, middle, right = st.columns((1, 5, 1))
+    with middle:
+        st.plotly_chart(fig_overall)
+        st.divider()
 
 pre_button = False
 
