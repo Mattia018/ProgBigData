@@ -618,7 +618,7 @@ if 'sent_chart' in st.session_state.visualizations:
     left, middle, right = st.columns((1, 5, 1))
     with middle:
         fig.update_layout(showlegend=False)
-        st.plotly_chart(fig)
+        st.plotly_chart(fig,use_container_width = True)
 
 st.divider()
 
@@ -781,7 +781,7 @@ if 'val_accuracy_chart' in st.session_state.visualizations:
 
     left, middle, right = st.columns((1, 5, 1))
     with middle:
-        st.plotly_chart(fig_overall)
+        st.plotly_chart(fig_overall,use_container_width = True)
         st.divider()
 
 pre_button = False
