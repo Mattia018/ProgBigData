@@ -65,7 +65,9 @@ with st.container():
 
     st.divider()
 
+
 ###  Dataset 1   ###
+
 st.title("_Harvey Data 2017_")
 
 if 'ds1_p_chart' not in st.session_state.visualizations:
@@ -81,7 +83,9 @@ with st.expander("Data Frame"):
 
 st.divider()
 
+
 ###  Dataset 2   ###
+
 st.title("_Harvei_Data_2017_aidr_classification_")
 
 if 'ds2_p_chart' not in st.session_state.visualizations:
@@ -97,7 +101,9 @@ with st.expander("Data Frame"):
 
 st.divider()
 
+
 ###  date   ###
+
 st.title("Tweet per data")
 
 date_button = create_button("Visualizza grafico", key="date_button")
@@ -114,6 +120,7 @@ if 'date_chart' in st.session_state.visualizations:
     )
 
 st.divider()
+
 
 ###  Count medio dei tweet per ogni ora del giono   ###
 
@@ -139,6 +146,7 @@ if 'avg_per_ora_chart' in st.session_state.visualizations:
 
 st.divider()
 
+
 ###  verif   ####
 
 st.title("Tweet di utenti verificati")
@@ -159,6 +167,7 @@ if 'verif_chart' in st.session_state.visualizations:
     st.plotly_chart(fig, use_container_width=True)
 
 st.divider()
+
 
 ###   parole più frequenti  ###
 
@@ -183,6 +192,8 @@ if 'parole_chart' in st.session_state.visualizations:
     st.plotly_chart(fig, use_container_width=True)
 
 st.divider()
+
+
 ###   hashtag più frequenti  ###
 
 st.title("HashTag più frequenti nei Tweet")
@@ -216,13 +227,7 @@ if label_button or pre_button:
     label_data = labelTweet()
     st.session_state.visualizations['label_chart'] = label_data
 
-if 'label_chart' in st.session_state.visualizations:
-    # st.bar_chart(
-    #     st.session_state.visualizations['label_chart'],
-    #     x="AIDRLabel",
-    #     y="count",
-    #     height=600
-    # )
+if 'label_chart' in st.session_state.visualizations:    
 
     fig = px.bar(
             st.session_state.visualizations['label_chart'],
@@ -233,6 +238,8 @@ if 'label_chart' in st.session_state.visualizations:
     st.plotly_chart(fig, use_container_width=True)
 
 st.divider()
+
+
 ###   parole più frequenti per tipologia tweet  ###
 
 st.title("Parole più Frequenti per Tipologia Tweet ")
@@ -252,8 +259,7 @@ if label_word_button or pre_button:
     st.session_state.visualizations['label_sympathy_and_support_chart'] = label_sympathy_and_support
     st.session_state.visualizations['label_personal_chart'] = label_personal
     st.session_state.visualizations['label_caution_and_advice_chart'] = label_caution_and_advice
-    st.session_state.visualizations[
-        'label_infrastructure_and_utilities_damage_chart'] = label_infrastructure_and_utilities_damage
+    st.session_state.visualizations['label_infrastructure_and_utilities_damage_chart'] = label_infrastructure_and_utilities_damage
     st.session_state.visualizations['label_injured_or_dead_people_chart'] = label_injured_or_dead_people
     st.session_state.visualizations['label_affected_individual_chart'] = label_affected_individual
     st.session_state.visualizations['label_missing_and_found_people_chart'] = label_missing_and_found_people
@@ -428,6 +434,8 @@ if 'label_not_related_or_irrelevant_chart' in st.session_state.visualizations:
         st.plotly_chart(fig, use_container_width=True)
 
 st.divider()
+
+
 ###   Posizioni più colpite  ###
 
 st.title(" Numero Tweet degli Stati più colpiti ")
@@ -454,6 +462,8 @@ if 'pos_chart' in st.session_state.visualizations:
     st.plotly_chart(fig, use_container_width=True)
 
 st.divider()
+
+
 ###   tweet geolocalizzati  ###
 
 st.title("Tweet Geolocalizzati")
@@ -570,6 +580,7 @@ st.title("Query con Machine Learning")
 
 st.divider()
 
+
 ###   Sentiment Analysis  ###
 
 st.title("Sentiment Analysis dei Tweet")
@@ -622,7 +633,9 @@ if 'sent_chart' in st.session_state.visualizations:
 
 st.divider()
 
+
 ###   Sentiment Analysis Posizioni più colpite ###
+
 st.title("Sentiment Analysis dei Tweet dei Paesi più colpiti")
 
 sent_pos_button = create_button("Visualizza grafico", key="sent_pos_button")
@@ -673,7 +686,9 @@ if 'sent_pos_chart' in st.session_state.visualizations:
 
 st.divider()
 
-###   Predizione su AIDRLabel ###
+
+###  Matrice Correlazione ###
+
 st.title("Predizione su AIDRLabel")
 st.divider()
 st.title("Matrice di Correlazione ")
@@ -703,12 +718,15 @@ if 'corr_matrix_chart' in st.session_state.visualizations:
     st.table(st.session_state.visualizations['post_enc_chart'].head(5))
 
 st.divider()
+
+###   Classificazioni con Random Forest (AIDRLabel)    ###
+
 st.title("Classificazione con Random Forest")
 
 class_button = create_button("Visualizza Classificazione", key="class_button")
 
 if class_button or pre_button:
-    val_accuracy, test_accuracy, overall_metrics_df, assembled_df_labels, metrics_df_label = classification()
+    val_accuracy, test_accuracy, overall_metrics_df, assembled_df_labels, metrics_df_label = classification_RandomForest()
 
     st.session_state.visualizations['val_accuracy_chart'] = val_accuracy
     st.session_state.visualizations['test_accuracy_chart'] = test_accuracy    
@@ -717,6 +735,73 @@ if class_button or pre_button:
     st.session_state.visualizations['metrics_df_label_chart'] = metrics_df_label
 
 if 'val_accuracy_chart' in st.session_state.visualizations:
+
+    st.markdown("Distribuzione etichette")
+    fig = px.bar(
+        st.session_state.visualizations['assembled_df_labels_chart'],
+        x="AIDRLabel_index",
+        y="count",
+        color="AIDRLabel_index",
+    )
+    fig.update_layout(showlegend=False)
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.divider()
+    st.markdown("Risultati Classificazione")
+
+    st.markdown(f"_Validation Accuracy_: :blue[{st.session_state.visualizations['val_accuracy_chart']:.4f}]")
+    st.divider()
+    st.markdown(f"_Test Accuracy_: :blue[{st.session_state.visualizations['test_accuracy_chart']:.4f}]")
+
+    st.divider()
+    
+    st.markdown("Metriche")
+
+    metriche = ['Precision', 'Recall', 'F1-Score']    
+
+    fig = go.Figure()
+
+    for label in st.session_state.visualizations['metrics_df_label_chart']['Label']:
+        data_frame_label = st.session_state.visualizations['metrics_df_label_chart'][metriche].loc[
+            st.session_state.visualizations['metrics_df_label_chart']['Label'] == label]
+        text = np.trunc(data_frame_label.values * 1000) / 1000
+        fig.add_trace(go.Bar(x=metriche, y=data_frame_label.values[0], text=text, name=label))
+
+    fig.update_layout(barmode='group', title="Metriche per ciascuna etichetta", xaxis_title="Metrica",
+                      yaxis_title="Valore", width=1500)
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.divider()
+
+    fig_overall = px.bar(st.session_state.visualizations['overall_metrics_df_chart'], x="Metrica", y="Valore",
+                         title="Metriche Generali",
+                         labels={"Metrica": "Metrica", "Valore": "Valore"},
+                         height=400,                                                  
+                         )
+
+    left, middle, right = st.columns((1, 5, 1))
+    with middle:
+        st.plotly_chart(fig_overall,use_container_width = True)
+        st.divider()
+
+st.divider()
+
+###   Classificazioni con Logistic Regretion (AIDRLabel)    ###
+
+st.title("Classificazione con Logistic Regretion")
+
+logreg_button = create_button("Visualizza Classificazione", key="logreg_button")
+
+if class_button or pre_button:
+    val_accuracy, test_accuracy, overall_metrics_df, assembled_df_labels, metrics_df_label = classification_LogReg()
+
+    st.session_state.visualizations['log_reg_val_accuracy_chart'] = val_accuracy
+    st.session_state.visualizations['test_accuracy_chart'] = test_accuracy    
+    st.session_state.visualizations['overall_metrics_df_chart'] = overall_metrics_df
+    st.session_state.visualizations['assembled_df_labels_chart'] = assembled_df_labels
+    st.session_state.visualizations['metrics_df_label_chart'] = metrics_df_label
+
+if 'log_reg_val_accuracy_chart' in st.session_state.visualizations:
 
     st.markdown("Distribuzione etichette")
     fig = px.bar(

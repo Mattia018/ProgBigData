@@ -11,9 +11,11 @@ from pyspark.sql.functions import hour, avg, col,trim, to_date, date_format,when
 from pyspark.sql.types import StringType,StructType,StructField, DoubleType
 from pyspark.ml.feature import StringIndexer, VectorAssembler,IndexToString 
 from pyspark.ml.stat import Correlation
-from pyspark.ml.classification import RandomForestClassifier
+from pyspark.ml.classification import RandomForestClassifier, LogisticRegression
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 from pyspark.mllib.evaluation import MulticlassMetrics
+from pyspark.ml import Pipeline
+
 
 import nltk
 from nltk.corpus import stopwords
@@ -215,8 +217,8 @@ def paroleFrequentiPerTipologia():
     def parolePiuFrequenti(df):      
         
         default_stop_words  = set(stopwords.words("english"))
-        custom_stop_words = ["rt", "https", "co", " ", "amp", "like", "1","go", "2", "3","5", "4","25", "21", "25th","26", "54","190", "b",
-                              "000", "u","edt","fl","mph", "d6vj7","daca","ap","60", "xkcqz4s2ra","2qoqloege2", "kqsptnr4ox"]
+        custom_stop_words = ["rt", "https", "co", " ", "amp", "like", "1","go", "2", "3","5", "4","25", "21", "25th", "21st", "26th", "com","26", "54","190", "b",
+                              "000", "u","edt","fl","mph", "d6vj7","daca","ap","60", "xkcqz4s2ra","2qoqloege2", "kqsptnr4ox", "rumqxwyfkb"]
         all_stop_words = default_stop_words.union(custom_stop_words)
         words_df = df.select("text").withColumn("words", split(lower("text"), r'\W+'))
         word_df = words_df.select(explode("words").alias("word")).filter(~col("word").isin(all_stop_words))
@@ -483,7 +485,7 @@ def correlazione():
     return corr_matrix_pearson, pre_enc, post_enc
 
 ###   Classificazione con Random Forest  ###
-def classification():
+def classification_RandomForest():
 
     # Encoding delle feature
     indexed_df = df_combined.withColumn("user_verified_index", when(col("user_verified") == "true", 1).otherwise(0))
@@ -533,23 +535,35 @@ def classification():
     metrics = MulticlassMetrics(test_predictions_and_labels_rdd)
 
     labels = test_predictions_and_labels_rdd.map(lambda x: x[1]).distinct().collect()   
-        
-    #relabeling
-    metrics_data_label = []
-    label_converter = IndexToString(inputCol="AIDRLabel_index", outputCol="AIDRLabel_original")
-    indexed_df_with_labels = label_converter.transform(indexed_df)
-    original_labels = indexed_df_with_labels.select("AIDRLabel_original").distinct().rdd.map(lambda row: row[0]).collect()    
+
+    metrics_data = []
+
+    label_to_index = {
+    'not_related_or_irrelevant': 0,
+    'donation_and_volunteering':1,
+    'relevant_information':2,
+    'sympathy_and_support': 3,
+    'personal':4,
+    'caution_and_advice':5,
+    'infrastructure_and_utilities_damage':6,
+    'injured_or_dead_people':7,
+    'affected_individual':8,
+    'missing_and_found_people':9,
+    'response_efforts':10     
+    }
+
 
     for label in labels:
         label_precision = metrics.precision(label)
         label_recall = metrics.recall(label)
         label_f1_score = metrics.fMeasure(label)
-    
-        metrics_data_label.append({"Label": original_labels[int(label)], "Precision": label_precision, "Recall": label_recall, "F1-Score": label_f1_score})
-    
+       
+        label_name = [key for key, value in label_to_index.items() if value == label][0]
 
-    metrics_df_label = pd.DataFrame(metrics_data_label, columns=["Label", "Precision", "Recall", "F1-Score"])
+        metrics_data.append({"Label": label_name, "Precision": label_precision, "Recall": label_recall, "F1-Score": label_f1_score})
 
+    metrics_df = pd.DataFrame(metrics_data, columns=["Label", "Precision", "Recall", "F1-Score"])    
+ 
     # Calcolo delle metriche generali
     overall_precision = metrics.weightedPrecision
     overall_recall = metrics.weightedRecall
@@ -563,6 +577,105 @@ def classification():
     })
 
 
-    return val_accuracy, test_accuracy,overall_metrics_df, assembled_df_labels, metrics_df_label
+    return val_accuracy, test_accuracy,overall_metrics_df, assembled_df_labels, metrics_df
 
+
+
+###   Classificazione con Logistic regretion  ###
+
+def classification_LogReg():
+
+    # Encoding delle feature
+    indexed_df = df_combined.withColumn("user_verified_index", when(col("user_verified") == "true", 1).otherwise(0))
+    indexed_df = indexed_df.withColumn("AIDRConfidence_numeric", col("AIDRConfidence").cast("double"))
+    indexer = StringIndexer(inputCol="AIDRLabel", outputCol="AIDRLabel_index")
+    indexed_df = indexer.fit(indexed_df).transform(indexed_df)
     
+    # Seleziona le colonne rilevanti   
+    selected_cols = ["user_followers", "AIDRLabel_index", "AIDRConfidence_numeric","user_verified_index"] 
+    df_class= indexed_df.select(selected_cols)   
+    
+    # VectorAssembler per creare un vettore di features
+    assembler = VectorAssembler(inputCols=selected_cols, outputCol="features")
+    assembled_df = assembler.transform(df_class)
+    
+    # Split dataset in training, validation, test sets
+    train_data, val_data, test_data = assembled_df.randomSplit([0.6, 0.2, 0.2], seed=123)
+
+    # Inizializzazione LogisticRegression
+    lr_classifier = LogisticRegression(featuresCol="features", labelCol="AIDRLabel_index")
+
+    # Creazione del pipeline
+    pipeline = Pipeline(stages=[lr_classifier])
+
+    # Addestramento del modello su training data
+    lr_model = pipeline.fit(train_data)
+
+    # Predizione su validation set
+    val_predictions = lr_model.transform(val_data)
+
+    # Valutazione
+    evaluator = MulticlassClassificationEvaluator(labelCol="AIDRLabel_index", predictionCol="prediction", metricName="accuracy")
+
+    # Accuracy su validation set
+    val_accuracy = evaluator.evaluate(val_predictions)    
+
+    # Predizione su test set
+    test_predictions = lr_model.transform(test_data)   
+
+    # Accuracy su test set
+    test_accuracy = evaluator.evaluate(test_predictions)   
+
+    # # DF con predizioni     
+   
+    label_to_index = {
+    'not_related_or_irrelevant': 0,
+    'donation_and_volunteering':1,
+    'relevant_information':2,
+    'sympathy_and_support': 3,
+    'personal':4,
+    'caution_and_advice':5,
+    'infrastructure_and_utilities_damage':6,
+    'injured_or_dead_people':7,
+    'affected_individual':8,
+    'missing_and_found_people':9,
+    'response_efforts':10     
+    }
+
+   
+    test_predictions_and_labels_rdd = test_predictions.select("prediction", "AIDRLabel_index").rdd     
+
+    metrics = MulticlassMetrics(test_predictions_and_labels_rdd)
+
+    labels = test_predictions_and_labels_rdd.map(lambda x: x[1]).distinct().collect()   
+
+    metrics_data = []
+
+    for label in labels:
+        label_precision = metrics.precision(label)
+        label_recall = metrics.recall(label)
+        label_f1_score = metrics.fMeasure(label)
+       
+        label_name = [key for key, value in label_to_index.items() if value == label][0]
+
+        metrics_data.append({"Label": label_name, "Precision": label_precision, "Recall": label_recall, "F1-Score": label_f1_score})
+
+    metrics_df = pd.DataFrame(metrics_data, columns=["Label", "Precision", "Recall", "F1-Score"])  
+
+    # Calcolo delle metriche generali
+    overall_precision = evaluator.evaluate(test_predictions, {evaluator.metricName: "weightedPrecision"})
+    overall_recall = evaluator.evaluate(test_predictions, {evaluator.metricName: "weightedRecall"})
+    overall_accuracy = evaluator.evaluate(test_predictions, {evaluator.metricName: "accuracy"})
+    
+    # Creazione del DataFrame per le metriche generali
+    overall_metrics_df = pd.DataFrame({
+        "Metrica": ["Precision", "Recall", "Accuracy"],
+        "Valore": [overall_precision, overall_recall, overall_accuracy]
+    })
+    
+    # Calcolo della distribuzione delle etichette
+    assembled_df_labels = assembled_df.groupBy("AIDRLabel_index").count().orderBy("AIDRLabel_index")      
+    assembled_df_labels = assembled_df_labels.toPandas()
+
+    return val_accuracy, test_accuracy, overall_metrics_df, assembled_df_labels,metrics_df
+
