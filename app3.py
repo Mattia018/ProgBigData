@@ -577,7 +577,7 @@ st.title("Sentiment Analysis dei Tweet")
 sent_button = create_button("Visualizza grafico", key="sent_button")
 
 if sent_button or pre_button:
-    sent_data, t_pos, t_neg, t_neu = sentiment_tre()
+    sent_data, t_pos, t_neg, t_neu = sentiment_Vader()
     sentiment_data = {
         "sentiment": [row["sentiment"] for row in sent_data],
         "count": [row["count"] for row in sent_data]
@@ -708,11 +708,10 @@ st.title("Classificazione con Random Forest")
 class_button = create_button("Visualizza Classificazione", key="class_button")
 
 if class_button or pre_button:
-    val_accuracy, test_accuracy, metrics_df, overall_metrics_df, assembled_df_labels, metrics_df_label = classification()
+    val_accuracy, test_accuracy, overall_metrics_df, assembled_df_labels, metrics_df_label = classification()
 
     st.session_state.visualizations['val_accuracy_chart'] = val_accuracy
-    st.session_state.visualizations['test_accuracy_chart'] = test_accuracy
-    st.session_state.visualizations['metrics_df_chart'] = metrics_df
+    st.session_state.visualizations['test_accuracy_chart'] = test_accuracy    
     st.session_state.visualizations['overall_metrics_df_chart'] = overall_metrics_df
     st.session_state.visualizations['assembled_df_labels_chart'] = assembled_df_labels
     st.session_state.visualizations['metrics_df_label_chart'] = metrics_df_label
@@ -737,27 +736,10 @@ if 'val_accuracy_chart' in st.session_state.visualizations:
     st.markdown(f"_Test Accuracy_: :blue[{st.session_state.visualizations['test_accuracy_chart']:.4f}]")
 
     st.divider()
-
-    # Assuming you have defined st.session_state.visualizations['metrics_df_chart'] appropriately
-
+    
     st.markdown("Metriche")
 
-    metriche = ['Precision', 'Recall', 'F1-Score']
-    fig = go.Figure()
-
-    for label in st.session_state.visualizations['metrics_df_chart']['Label']:
-        data_frame = st.session_state.visualizations['metrics_df_chart'][metriche].loc[
-            st.session_state.visualizations['metrics_df_chart']['Label'] == label]
-        text = np.trunc(data_frame.values * 1000) / 1000
-        fig.add_trace(go.Bar(x=metriche, y=data_frame.values[0], text=text, name=label))
-
-    fig.update_layout(barmode='group', title="Metriche per ciascuna etichetta", xaxis_title="Metrica",
-                      yaxis_title="Valore", width=1500)
-    st.plotly_chart(fig, use_container_width=True)
-
-    st.divider()
-
-    metriche = ['Precision', 'Recall', 'F1-Score']
+    metriche = ['Precision', 'Recall', 'F1-Score']    
 
     fig = go.Figure()
 
