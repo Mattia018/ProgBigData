@@ -1,15 +1,15 @@
+from main2 import *
 import streamlit as st
 import plotly.express as px
-from main2 import *
-import pydeck as pdk
 import plotly.graph_objects as go
+import pydeck as pdk
 import numpy as np
 
 if 'visualizations' not in st.session_state:
     st.session_state.visualizations = {}
 
 st.set_page_config(
-    page_title="Visualizzation Big Data",
+    page_title="Visualization Big Data",
     layout="wide",
     page_icon="📈"
 )
@@ -102,7 +102,7 @@ with st.expander("Data Frame"):
 st.divider()
 
 
-###  date   ###
+###  Conteggio tweet per Data   ###
 
 st.title("Tweet per data")
 
@@ -147,7 +147,7 @@ if 'avg_per_ora_chart' in st.session_state.visualizations:
 st.divider()
 
 
-###  verif   ####
+###  Contggio tweet di utenti verificati   ####
 
 st.title("Tweet di utenti verificati")
 
@@ -169,7 +169,7 @@ if 'verif_chart' in st.session_state.visualizations:
 st.divider()
 
 
-###   parole più frequenti  ###
+###   Parole più frequenti  ###
 
 st.title("Parole più frequenti nei Tweet")
 
@@ -194,7 +194,7 @@ if 'parole_chart' in st.session_state.visualizations:
 st.divider()
 
 
-###   hashtag più frequenti  ###
+###   Hashtag più frequenti  ###
 
 st.title("HashTag più frequenti nei Tweet")
 
@@ -217,7 +217,8 @@ if 'hash_chart' in st.session_state.visualizations:
     st.plotly_chart(fig, use_container_width=True)
 
 st.divider()
-###   label aidr  ###
+
+###   Tipologia Tweet  ###
 
 st.title("Tipologia Tweet ")
 
@@ -240,7 +241,7 @@ if 'label_chart' in st.session_state.visualizations:
 st.divider()
 
 
-###   parole più frequenti per tipologia tweet  ###
+###   Parole più frequenti per ogni tipologia tweet  ###
 
 st.title("Parole più Frequenti per Tipologia Tweet ")
 
@@ -436,7 +437,7 @@ if 'label_not_related_or_irrelevant_chart' in st.session_state.visualizations:
 st.divider()
 
 
-###   Posizioni più colpite  ###
+###   Conteggio tweet degli Stati più colpiti  ###
 
 st.title(" Numero Tweet degli Stati più colpiti ")
 
@@ -447,11 +448,7 @@ if pos_button or pre_button:
     st.session_state.visualizations['pos_chart'] = pos_data
 
 if 'pos_chart' in st.session_state.visualizations:
-    #  st.bar_chart(
-    #         st.session_state.visualizations['pos_chart'],
-    #         x="nation",
-    #         y="count",
-    #     )
+
 
     fig = px.pie(
         st.session_state.visualizations['pos_chart'],
@@ -464,117 +461,114 @@ if 'pos_chart' in st.session_state.visualizations:
 st.divider()
 
 
-###   tweet geolocalizzati  ###
+###   Tweet geolocalizzati  ###
 
-st.title("Tweet Geolocalizzati")
-
+st.title("Tweet Geolocalizzati ")
 geo_button = create_button("Visualizza grafico", key="geo_button")
 
 if geo_button or pre_button:
     combined_data = geoTweetBello()
     st.session_state.visualizations['combined_chart'] = combined_data
 
+
 if 'combined_chart' in st.session_state.visualizations:
 
-    # Aggiungi un selettore per i layer
-    selected_layers = st.multiselect('Seleziona i layer:', ['Tweet', 'Punti di Danno', 'Traiettoria', 'Tweet_Grid'])
-
-    # Dividi i dati in tweet, punti di danno
+    # Punti di danno e tweet
     tweet_data = st.session_state.visualizations['combined_chart'][
         st.session_state.visualizations['combined_chart']['type'] == 'Tweet']
     damage_data = st.session_state.visualizations['combined_chart'][
         st.session_state.visualizations['combined_chart']['type'] == 'Damage']
 
     layers = []
+    
+    # Layer tweet
+    tweet_layer = pdk.Layer(
+        'ScatterplotLayer',
+        data=tweet_data,
+        get_position='[lon, lat]',
+        get_color='[0, 0, 255, 100]',  # Tweet in blu
+        get_radius=2000,  
+        pickable=True,
+        auto_highlight=True,
+        filled=True,
+        filled_color="[0, 0, 255, 255]",
+        outline=True,
+        outline_color="[0, 0, 255, 255]",        
+        get_tooltip='Tweet' 
+    )
+    layers.append(tweet_layer)
+    
+    # Layer punti di danno
+    damage_layer = pdk.Layer(
+        'ScatterplotLayer',
+        data=damage_data,
+        get_position='[lon, lat]',
+        get_color='[255, 0, 0, 100]',  # Punti di danno in rosso
+        get_radius=5000,  # Imposta un raggio adeguato
+        pickable=True,
+        auto_highlight=True,
+        filled=True,
+        filled_color="[255, 0, 0, 255]",  # Colore rosso per i punti di danno
+        outline=True,
+        outline_color="[255, 0, 0, 255]",        
+        get_tooltip='Demage'  
+    )
+    layers.append(damage_layer)
 
-    # Aggiungi il layer tweet se è selezionato
-    if 'Tweet' in selected_layers:
-        tweet_layer = pdk.Layer(
-            'ScatterplotLayer',
-            data=tweet_data,
-            get_position='[lon, lat]',
-            get_color='[0, 0, 255, 100]',  # Tweet in blu
-            get_radius=2000,  # Imposta un raggio adeguato
-            pickable=True,
-            auto_highlight=True,
-            filled=True,
-            filled_color="[0, 0, 255, 255]",  # Colore blu per i tweet
-            outline=True,
-            outline_color="[0, 0, 255, 255]",  # Colore blu per i tweet
+    
+    paths = []
+
+    # Posizione per creare la traiettoria
+    for i in range(len(damage_data) - 1):
+        start_point = [damage_data.iloc[i]['lon'], damage_data.iloc[i]['lat']]
+        end_point = [damage_data.iloc[i + 1]['lon'], damage_data.iloc[i + 1]['lat']]
+
+        path = {
+            "start": start_point,
+            "end": end_point,
+        }
+
+        paths.append(path)
+
+    # Layer traiettoria
+    line_layer = pdk.Layer(
+        "LineLayer",
+        paths,
+        get_source_position="start",
+        get_target_position="end",
+        get_color=[255, 140, 0],
+        get_width=5,
+        highlight_color=[255, 255, 0],
+        picking_radius=10,
+        auto_highlight=True,
+        pickable=True,
         )
-        layers.append(tweet_layer)
+    layers.append(line_layer)
 
-    # Aggiungi il layer punti di danno se è selezionato
-    if 'Punti di Danno' in selected_layers:
-        damage_layer = pdk.Layer(
-            'ScatterplotLayer',
-            data=damage_data,
-            get_position='[lon, lat]',
-            get_color='[255, 0, 0, 100]',  # Punti di danno in rosso
-            get_radius=5000,  # Imposta un raggio adeguato
-            pickable=True,
-            auto_highlight=True,
-            filled=True,
-            filled_color="[255, 0, 0, 255]",  # Colore rosso per i punti di danno
-            outline=True,
-            outline_color="[255, 0, 0, 255]",  # Colore rosso per i punti di danno
-        )
-        layers.append(damage_layer)
-
-    # Aggiungi il layer degli aeroporti se è selezionato
-    if 'Traiettoria' in selected_layers:
-        # Crea una lista vuota per memorizzare i percorsi simulati
-        paths = []
-
-        # Itera attraverso i dati degli aeroporti per calcolare e creare i percorsi simulati
-        for i in range(len(damage_data) - 1):
-            start_point = [damage_data.iloc[i]['lon'], damage_data.iloc[i]['lat']]
-            end_point = [damage_data.iloc[i + 1]['lon'], damage_data.iloc[i + 1]['lat']]
-
-            path = {
-                "start": start_point,
-                "end": end_point,
-            }
-
-            paths.append(path)
-
-        # Crea il livello di percorsi (linee) utilizzando pydeck.Layer
-        line_layer = pdk.Layer(
-            "LineLayer",
-            paths,
-            get_source_position="start",
-            get_target_position="end",
-            get_color=[255, 140, 0],
-            get_width=5,
-            highlight_color=[255, 255, 0],
-            picking_radius=10,
-            auto_highlight=True,
-            pickable=True,
-        )
-        layers.append(line_layer)
-
-    # Definisci lo stato di visualizzazione iniziale
+    # Visualizzazione iniziale
     INITIAL_VIEW_STATE = pdk.ViewState(
-        latitude=48.17,
-        longitude=-24.27,
-        zoom=4.5,
+        latitude=37.0902,  # Latitudine degli Stati Uniti
+        longitude=-95.7129,  # Longitudine degli Stati Uniti
+        zoom=3,  
         max_zoom=16,
         pitch=30,
         bearing=0
     )
 
-    # Crea il deck con i layer selezionati
-    deck = pdk.Deck(layers=layers, initial_view_state=INITIAL_VIEW_STATE)
+    # Deck con i layer selezionati
+    deck = pdk.Deck(
+        layers=layers,
+        initial_view_state=INITIAL_VIEW_STATE,
+        map_style='mapbox://styles/mapbox/satellite-streets-v12'  
+    )
 
     # Visualizza il deck
     st.pydeck_chart(deck)
-
-    # Salva il deck in un file HTML
     deck.to_html("deck.html")
 
 st.divider()
 
-###   Query in Machine Learning ###
+###   Query con l'uso del  Machine Learning ###
 
 st.title("Query con Machine Learning")
 

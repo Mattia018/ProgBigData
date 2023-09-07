@@ -80,8 +80,7 @@ df_start = df_start.withColumn("tweet_time", substring("tweet_date_full", 12, 8)
 def dataset_start():
     ds1= df_start.select( col("tweet_id").cast("string"), col("user_id").cast("string"), "user_name", "user_followers", \
                          "user_verified", "text", "hashtags", "tweet_date", "tweet_time",\
-                         "user_location","tweet_place", "tweet_pos" )
-    
+                         "user_location","tweet_place", "tweet_pos" )    
 
     ds1_p=ds1.toPandas()
     ds1_p= ds1_p.sample(15, ignore_index=True,random_state=44)    
@@ -130,8 +129,6 @@ def mediaTweetPerOra():
     window_spec = Window.partitionBy("tweet_date").orderBy("tweet_hour")
     hourly_tweet_avg = df_with_hour.groupBy("tweet_date", "tweet_hour").count()\
         .withColumn("avg_tweet_count", avg("count").over(window_spec))    
-    
-    # Rimuovi le righe con tweet_hour null
     hourly_tweet_avg = hourly_tweet_avg.filter(hourly_tweet_avg.tweet_hour.isNotNull())  
     hourly_tweet_avg = hourly_tweet_avg.groupBy("tweet_hour").agg(avg("count").alias("avg_tweet_count")).orderBy("tweet_hour")    
     hourly_tweet_avg = hourly_tweet_avg.toPandas()
@@ -153,7 +150,7 @@ def dateTweet():
     date_tweet_count = date_tweet_count.withColumn("tweet_date", substring("tweet_date", 5, 10))    
     date_tweet_count = date_tweet_count.withColumn("tweet_date", to_date(date_tweet_count["tweet_date"], "MMM dd"))    
     date_tweet_count = date_tweet_count.withColumn("tweet_date", date_format(date_tweet_count["tweet_date"], "MM-dd"))    
-    date_tweet_count = date_tweet_count.groupBy("tweet_date").count().orderBy("tweet_date")        
+    date_tweet_count = date_tweet_count.groupBy("tweet_date").count().orderBy("tweet_date") 
 
     return date_tweet_count
 
