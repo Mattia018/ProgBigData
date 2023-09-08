@@ -2,7 +2,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.express as px
-import seaborn as sns
 
 import pyspark
 from pyspark.sql import SparkSession
@@ -186,8 +185,7 @@ def parolePiuFrequenti():
 ###  Count dei tweet per ogni tipologia   ###
 def labelTweet():
     label_counts = df_combined.groupBy("AIDRLabel").count().orderBy(col("count").desc())
-    label_count_pandas= label_counts.toPandas()
-    label_count_pandas= label_count_pandas.iloc[::-1]    
+    label_count_pandas= label_counts.toPandas()       
 
     return label_count_pandas
 
@@ -333,9 +331,9 @@ def geoTweetBello():
     return combined_data
 
 
-### Count dei tweet neei Paesi più colpiti (Texas, Luisiana) ###
+### Count dei tweet degli Stati più colpiti (Texas, Luisiana) ###
 def posColpite():
-    most=df_combined.filter(trim(col("tweet_place")).isNotNull())
+    most = df_combined.filter(trim(col("tweet_place")).isNotNull())
     most = most.withColumn("nation", split(most["tweet_place"], ",")[1])
     filter_state = most.filter((col("nation").contains("TX")) | (col("nation").contains("LA")))
 

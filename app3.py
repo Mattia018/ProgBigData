@@ -2,6 +2,7 @@ from main2 import *
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
+import seaborn as sns
 import pydeck as pdk
 import numpy as np
 
@@ -207,12 +208,12 @@ if hash_button or pre_button:
 
 if 'hash_chart' in st.session_state.visualizations:
     fig = px.bar(
-        st.session_state.visualizations['parole_chart'],
+        st.session_state.visualizations['hash_chart'],
         x="count",
         y="word",
         orientation="h",
         height=600,
-        title="Top 20 Hashtag più frequenti nei Tweets"
+        title="Top 15 Hashtag più frequenti nei Tweets"
     )
     st.plotly_chart(fig, use_container_width=True)
 
