@@ -45,8 +45,8 @@ with st.container():
     st.markdown("<h3 style=' font-family: Arial, sans-serif;'>\
                 Dataset : Harvey Data 2017, Harvey_Data_2017_aidr_classification </h3>\
                 <p style='font-family: Arial, sans-serif; font-size: 20px;'>\
-                <b style=' font-size: 20px;' >Harvey Data 2017 </b> contiene dati Twitter Json relativi all' uragano harvey con più di 3 milioni di tuple a partire dal giono 27 Agosto 2017 fino a 19 Settembre 2017,\
-                circa 15 giorni dopo il picco massimo del fenomeno </p>\
+                <b style=' font-size: 20px;' >Harvey Data 2017 </b> contiene dati Twitter Json relativi all' uragano harvey con più di 3 milioni di tweet a partire dal giono 27 Agosto 2017 fino a 19 Settembre 2017,\
+                circa 20 giorni dopo i disastri causati dall'uragano </p>\
                 <p style='font-family: Arial, sans-serif; font-size: 20px;'>\
                 <b style=' font-size: 20px;'>Harvey_Data_2017_aidr_classification</b> contiene dati Twitter relativi all' uragano harvey con l'aggiunta della classificazione \
                 in 12 etichette diverse che esprimono la rilevanza e la tipologia del tweet </p>"
