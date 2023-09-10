@@ -209,6 +209,7 @@ def paroleFrequentiPerTipologia():
     label_response_efforts = df_combined.filter(col("AIDRLabel")=="response_efforts").select("text")
     label_displaced_and_evacuations = df_combined.filter(col("AIDRLabel")=="displaced_and_evacuations").select("text")
 
+    # NB: la funzione "parolePiuFrequenti()" viene ridefinita per evitare il passaggio del DF nella chiamata Frontend
     def parolePiuFrequenti(df):      
         
         default_stop_words  = set(stopwords.words("english"))
@@ -268,7 +269,7 @@ def hashtagPiuFrequenti():
 ### tweet geolocalizzati ###
 def geoTweetBello():
     dfLocalizzati = df_start.filter(col("tweet_pos").isNotNull())
-
+    print(dfLocalizzati.count())
     # Converti le coordinate dei tweet in coordinate Basemap
     tweet_lons = dfLocalizzati.select(col("tweet_pos")[1].alias("longitude")).toPandas()["longitude"].tolist()
     tweet_lats = dfLocalizzati.select(col("tweet_pos")[0].alias("latitude")).toPandas()["latitude"].tolist()
@@ -331,7 +332,7 @@ def geoTweetBello():
     return combined_data
 
 
-### Count dei tweet degli Stati più colpiti (Texas, Luisiana) ###
+### Count dei tweet degli Stati più colpiti (Texas, Louisiana) ###
 def posColpite():
     most = df_combined.filter(trim(col("tweet_place")).isNotNull())
     most = most.withColumn("nation", split(most["tweet_place"], ",")[1])
@@ -400,7 +401,9 @@ def sentiment_Vader():
     return sentiment_counts, t_pos, t_neg, t_neu
 
 
-###  Calcolo sentiment dei paesi più colpiti   ###
+###  Calcolo sentiment degli Stati più colpiti   ###
+
+
 def sentimentPosColpite():
    
     nltk.download("vader_lexicon")
@@ -411,10 +414,10 @@ def sentimentPosColpite():
     filter_state = filter_state.withColumn("nation", split(filter_state["tweet_place"], ",")[1])
     filter_state = filter_state.filter((col("nation").contains("TX")) | (col("nation").contains("LA")))   
 
+    # NB: la funzione "analyze_sentiment_vader()" viene ridefinita per evitare il passaggio del DF nella chiamata Frontend
     def analyze_sentiment_vader(text):
-        sentiment_scores = sia.polarity_scores(text)
+        sentiment_scores = sia.polarity_scores(text)        
         
-        # Assegna un colore in base al compound score di VADER
         if sentiment_scores['compound'] >= 0.05:
             sentiment = 'positive'
         elif sentiment_scores['compound'] <= -0.05:
@@ -473,9 +476,9 @@ def correlazione():
     # Calcola la matrice di correlazione
     correlation_matrix = Correlation.corr(assembled_df, "features").head()
     corr_matrix = correlation_matrix[0].toArray()
-    corr_matrix_df = spark.createDataFrame(corr_matrix.tolist(), selected_cols)
-    corr_matrix_df = pd.DataFrame(corr_matrix, columns=selected_cols)
-    corr_matrix_pearson = corr_matrix_df.corr()
+    corr_matrix_df = spark.createDataFrame(corr_matrix.tolist(), selected_cols)    
+    corr_matrix_df = pd.DataFrame(corr_matrix, columns=selected_cols)    
+    corr_matrix_pearson = corr_matrix_df.corr()    
 
     return corr_matrix_pearson, pre_enc, post_enc
 
@@ -576,7 +579,7 @@ def classification_RandomForest():
 
 
 
-###   Classificazione con Logistic regretion  ###
+###   Classificazione con Logistic Regression  ###
 
 def classification_LogReg():
 
@@ -621,7 +624,7 @@ def classification_LogReg():
     # Accuracy su test set
     test_accuracy = evaluator.evaluate(test_predictions)   
 
-    # # DF con predizioni     
+    # DF con predizioni     
    
     label_to_index = {
     'not_related_or_irrelevant': 0,

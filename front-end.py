@@ -1,4 +1,4 @@
-from main2 import *
+from queries import *
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
@@ -93,7 +93,7 @@ if 'ds2_p_chart' not in st.session_state.visualizations:
     ds2_p, ds2_count = dataset_aidr_classification()
     st.session_state.visualizations['ds2_p_chart'], st.session_state.visualizations[
         'ds2_count_chart'] = ds2_p, ds2_count
-    pre_button = True
+    pre_button = False
 
 with st.expander("Data Frame"):
     st.dataframe(st.session_state.visualizations['ds2_p_chart'], use_container_width=True, hide_index=True)
@@ -125,7 +125,7 @@ st.divider()
 
 ###  Count medio dei tweet per ogni ora del giono   ###
 
-st.title("Numero medio di Tweet per ogni ora del giono")
+st.title("Numero medio di Tweet per ogni ora del giorno")
 
 ora_button = create_button("Visualizza grafico", key="ora_button")
 
@@ -505,11 +505,11 @@ if 'combined_chart' in st.session_state.visualizations:
         data=damage_data,
         get_position='[lon, lat]',
         get_color='[255, 0, 0, 100]',  # Punti di danno in rosso
-        get_radius=5000,  # Imposta un raggio adeguato
+        get_radius=5000,  
         pickable=True,
         auto_highlight=True,
         filled=True,
-        filled_color="[255, 0, 0, 255]",  # Colore rosso per i punti di danno
+        filled_color="[255, 0, 0, 255]",
         outline=True,
         outline_color="[255, 0, 0, 255]",        
         get_tooltip='Demage'  
@@ -629,7 +629,7 @@ if 'sent_chart' in st.session_state.visualizations:
 st.divider()
 
 
-###   Sentiment Analysis Posizioni più colpite ###
+###   Sentiment Analysis Stati più colpite ###
 
 st.title("Sentiment Analysis dei Tweet dei Paesi più colpiti")
 
@@ -781,26 +781,26 @@ if 'val_accuracy_chart' in st.session_state.visualizations:
 
 st.divider()
 
-###   Classificazioni con Logistic Regretion (AIDRLabel)    ###
+###   Classificazioni con Logistic Regression (AIDRLabel)    ###
 
-st.title("Classificazione con Logistic Regretion")
+st.title("Classificazione con Logistic Regression")
 
 logreg_button = create_button("Visualizza Classificazione", key="logreg_button")
 
 if class_button or pre_button:
     val_accuracy, test_accuracy, overall_metrics_df, assembled_df_labels, metrics_df_label = classification_LogReg()
 
-    st.session_state.visualizations['log_reg_val_accuracy_chart'] = val_accuracy
-    st.session_state.visualizations['test_accuracy_chart'] = test_accuracy    
-    st.session_state.visualizations['overall_metrics_df_chart'] = overall_metrics_df
-    st.session_state.visualizations['assembled_df_labels_chart'] = assembled_df_labels
-    st.session_state.visualizations['metrics_df_label_chart'] = metrics_df_label
+    st.session_state.visualizations['log_reg_val_accuracy_chart_lr'] = val_accuracy
+    st.session_state.visualizations['test_accuracy_chart_lr'] = test_accuracy    
+    st.session_state.visualizations['overall_metrics_df_chart_lr'] = overall_metrics_df
+    st.session_state.visualizations['assembled_df_labels_chart_lr'] = assembled_df_labels
+    st.session_state.visualizations['metrics_df_label_chart_lr'] = metrics_df_label
 
-if 'log_reg_val_accuracy_chart' in st.session_state.visualizations:
+if 'log_reg_val_accuracy_chart_lr' in st.session_state.visualizations:
 
     st.markdown("Distribuzione etichette")
     fig = px.bar(
-        st.session_state.visualizations['assembled_df_labels_chart'],
+        st.session_state.visualizations['assembled_df_labels_chart_lr'],
         x="AIDRLabel_index",
         y="count",
         color="AIDRLabel_index",
@@ -811,9 +811,9 @@ if 'log_reg_val_accuracy_chart' in st.session_state.visualizations:
     st.divider()
     st.markdown("Risultati Classificazione")
 
-    st.markdown(f"_Validation Accuracy_: :blue[{st.session_state.visualizations['val_accuracy_chart']:.4f}]")
+    st.markdown(f"_Validation Accuracy_: :blue[{st.session_state.visualizations['log_reg_val_accuracy_chart_lr']:.4f}]")
     st.divider()
-    st.markdown(f"_Test Accuracy_: :blue[{st.session_state.visualizations['test_accuracy_chart']:.4f}]")
+    st.markdown(f"_Test Accuracy_: :blue[{st.session_state.visualizations['test_accuracy_chart_lr']:.4f}]")
 
     st.divider()
     
@@ -823,9 +823,9 @@ if 'log_reg_val_accuracy_chart' in st.session_state.visualizations:
 
     fig = go.Figure()
 
-    for label in st.session_state.visualizations['metrics_df_label_chart']['Label']:
-        data_frame_label = st.session_state.visualizations['metrics_df_label_chart'][metriche].loc[
-            st.session_state.visualizations['metrics_df_label_chart']['Label'] == label]
+    for label in st.session_state.visualizations['metrics_df_label_chart_lr']['Label']:
+        data_frame_label = st.session_state.visualizations['metrics_df_label_chart_lr'][metriche].loc[
+            st.session_state.visualizations['metrics_df_label_chart_lr']['Label'] == label]
         text = np.trunc(data_frame_label.values * 1000) / 1000
         fig.add_trace(go.Bar(x=metriche, y=data_frame_label.values[0], text=text, name=label))
 
@@ -835,7 +835,7 @@ if 'log_reg_val_accuracy_chart' in st.session_state.visualizations:
 
     st.divider()
 
-    fig_overall = px.bar(st.session_state.visualizations['overall_metrics_df_chart'], x="Metrica", y="Valore",
+    fig_overall = px.bar(st.session_state.visualizations['overall_metrics_df_chart_lr'], x="Metrica", y="Valore",
                          title="Metriche Generali",
                          labels={"Metrica": "Metrica", "Valore": "Valore"},
                          height=400,                                                  
