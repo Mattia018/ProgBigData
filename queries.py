@@ -26,7 +26,6 @@ os.environ['PYSPARK_PYTHON'] = sys.executable
 os.environ['PYSPARK_DRIVER_PYTHON'] = sys.executable
 
 
-#spark = SparkSession.builder.config("spark.executor.cores", "4").config("spark.executor.memory", "8g").getOrCreate()
 
 spark = SparkSession.builder.config("spark.executor.cores", "8") \
     .config("spark.executor.memory", "8g") \
@@ -92,6 +91,9 @@ def dataset_start():
 
 csv_path = "Data Set/harvey_data_2017_aidr_classification.txt"
 df3 = spark.read.csv(csv_path, sep="\t", header=True)
+
+# Rename della colonna TweetID per facilitare la join
+df3 = df3.withColumnRenamed("TweetID", "tweet_id")
 df3 = df3.drop("Date")
 
 def dataset_aidr_classification():
@@ -112,7 +114,7 @@ df_combined = df_start.join(df3, on="tweet_id", how="inner")
 
 
 
-# **********   Query **********
+# **********   Queries  **********
 
 
 
@@ -135,7 +137,7 @@ def mediaTweetPerOra():
     return hourly_tweet_avg
 
 
-# Conteggio dei tweet verificati e non verificati
+### Conteggio dei tweet verificati e non verificati ###
 
 def verifTweet():    
     verified_tweet_count = df_start.groupBy("user_verified").count().toPandas()
@@ -143,7 +145,7 @@ def verifTweet():
     
     return verified_tweet_count
 
-# Conteggio dei tweet per data
+### Conteggio dei tweet per data ###
 def dateTweet():    
     date_tweet_count = df_start.filter(col("tweet_date").isNotNull())
     date_tweet_count = date_tweet_count.withColumn("tweet_date", substring("tweet_date", 5, 10))    
@@ -154,7 +156,7 @@ def dateTweet():
     return date_tweet_count
 
 
-# Parole più frequenti nei tweet
+### Parole più frequenti nei tweet ###
 def parolePiuFrequenti():    
 
     # stop words in inglese da NLTK
@@ -190,7 +192,7 @@ def labelTweet():
     return label_count_pandas
 
 
-###   parolepiù frequenti per ogni tipologia di tweet   ###
+###   Parole più frequenti per ogni tipologia di tweet   ###
 def paroleFrequentiPerTipologia():
     
     nltk.download("stopwords")    
@@ -245,16 +247,16 @@ def paroleFrequentiPerTipologia():
         label_response_efforts,label_displaced_and_evacuations
 
 
-### hashtag più frequenti ###
+### Hashtag più frequenti ###
 def hashtagPiuFrequenti():
     
-    #testo in minuscolo
+    # testo in minuscolo
     hash_df = df_start.select(explode("hashtags").alias("hashtag"))
 
-    #split
+    # split
     hash_df = hash_df.withColumn("words", split(lower(col("hashtag")), ","))
 
-    #singole parole
+    # singole parole
     hash_df = hash_df.select(explode("words").alias("word"))
 
     # Calcolo gli hashtag più frequenti
@@ -266,7 +268,7 @@ def hashtagPiuFrequenti():
     return word_counts_pandas_h
 
 
-### tweet geolocalizzati ###
+### Tweet geolocalizzati ###
 def geoTweetBello():
     dfLocalizzati = df_start.filter(col("tweet_pos").isNotNull())
     print(dfLocalizzati.count())
@@ -315,17 +317,17 @@ def geoTweetBello():
         "lat": tweet_lats,
         "lon": tweet_lons,
         "type": ["Tweet"] * len(tweet_lats),
-        "color": [(0, 0, 255)] * len(tweet_lats)  # Blu per i tweet
+        "color": [(0, 0, 255)] * len(tweet_lats) 
     })
 
     damage_data = pd.DataFrame({
         "lat": [location["latitude"] for location in damage_locations],
         "lon": [location["longitude"] for location in damage_locations],
         "type": ["Damage"] * len(damage_locations),
-        "color": [(255, 0, 0)] * len(damage_locations)  # Rosso per i punti di danno
+        "color": [(255, 0, 0)] * len(damage_locations)
     })
 
-    # Unire i due DataFrames in uno solo
+    # Unire i DF
     combined_data = pd.concat([tweet_data, damage_data], ignore_index=True)
 
     
@@ -345,7 +347,7 @@ def posColpite():
     return filter_state
 
 
-# **********   Query con Machine Learning  **********
+# **********   Queries con Machine Learning  **********
 
 
 
@@ -403,7 +405,6 @@ def sentiment_Vader():
 
 ###  Calcolo sentiment degli Stati più colpiti   ###
 
-
 def sentimentPosColpite():
    
     nltk.download("vader_lexicon")
@@ -452,6 +453,7 @@ def sentimentPosColpite():
     
 
 ###   Calcolo Matrice di correlazione   ###
+
 def correlazione():
 
     pre_enc= df_combined. select("user_followers","user_verified","AIDRLabel", "AIDRConfidence")
@@ -483,6 +485,7 @@ def correlazione():
     return corr_matrix_pearson, pre_enc, post_enc
 
 ###   Classificazione con Random Forest  ###
+
 def classification_RandomForest():
 
     # Encoding delle feature
