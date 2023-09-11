@@ -93,7 +93,7 @@ if 'ds2_p_chart' not in st.session_state.visualizations:
     ds2_p, ds2_count = dataset_aidr_classification()
     st.session_state.visualizations['ds2_p_chart'], st.session_state.visualizations[
         'ds2_count_chart'] = ds2_p, ds2_count
-    pre_button = True
+    pre_button = False
 
 with st.expander("Data Frame"):
     st.dataframe(st.session_state.visualizations['ds2_p_chart'], use_container_width=True, hide_index=True)
